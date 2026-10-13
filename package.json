@@ -72,6 +72,6 @@
     "lint-staged": "^16.2.6",
     "prettier": "^3.7.4",
     "tsx": "4.21.0",
-    "typescript": "5.9.3"
+    "typescript": "7.0.2"
   }
 }
