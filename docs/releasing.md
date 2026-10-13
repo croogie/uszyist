@@ -321,6 +321,8 @@ Use Conventional Commit squash titles and full SemVer from 1.0.0: breaking chang
 
 Publication is serialized without cancelling a running publish. Release preparation uses the exact tagged commit, validates package/lock versions, builds once through prepack, consumer-smokes the exact tarball, and retains it before publication. The publisher checks identity, embedded package metadata, SHA-512, and registry integrity before uploading the same tarball.
 
+The workflow passes an absolute artifact directory to the publisher. Keep this path absolute: npm interprets a bare `release-artifact/package.tgz` argument as a GitHub repository shorthand rather than a local tarball.
+
 For recovery, use the exact tag, 40-character SHA, and original artifact run ID. The commands below intentionally dispatch publication recovery; run them only for an authorized release and after setting the three observed values:
 
 ```sh
@@ -334,7 +336,7 @@ gh workflow run release.yml --repo "$REPO" --ref main \
   -f artifact_run_id="$ORIGIN_RUN_ID"
 ```
 
-Find/watch the dispatch with `gh run list --repo "$REPO" --workflow release.yml --event workflow_dispatch`. The workflow checks out the original SHA and downloads the original 90-day-retained artifact, never newer automation or a rebuilt archive. Matching existing registry integrity skips publishing and repeats exact-version consumer smoke. Missing version (HTTP 404) publishes the same verified tarball. A different integrity, registry failure, or missing artifact stops recovery. With publication activation false, verification can run but publication stays disabled. Never treat unpublish as routine rollback.
+Find/watch the dispatch with `gh run list --repo "$REPO" --workflow release.yml --event workflow_dispatch`. The workflow definition comes from the dispatch ref (`main` in the command above), but the release scripts and source are checked out from the original SHA. It downloads the original 90-day-retained artifact, never a rebuilt archive. A script-only fix on main therefore does not change recovery of an older release; workflow argument fixes can still apply. Matching existing registry integrity skips publishing and repeats exact-version consumer smoke. Missing version (HTTP 404) publishes the same verified tarball. A different integrity, registry failure, or missing artifact stops recovery. With publication activation false, verification can run but publication stays disabled. Never treat unpublish as routine rollback.
 
 Sources: [`gh workflow run`](https://cli.github.com/manual/gh_workflow_run), [`gh run list`](https://cli.github.com/manual/gh_run_list).
 
