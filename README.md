@@ -8,7 +8,7 @@ The CLI implements nine commands using Oclif, TypeScript, and the official Todoi
 
 ## Installation
 
-The npm package is **not published yet**. After the authorized first publication, install the CLI globally or run it once without a global install:
+Install the CLI globally or run it once without a global install:
 
 ```sh
 npm install --global uszyist
