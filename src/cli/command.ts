@@ -1,23 +1,29 @@
 import {Command} from '@oclif/core';
 import {readConfig} from './config.js';
-import {taskTable, activityTable} from './output.js';
-import {createReference, clockInstant, parseClock} from '../time/reference.js';
+import {taskTable, activityTable, timelineTable} from './output.js';
+import {createReference, createDayReference, clockInstant, parseClock} from '../time/reference.js';
 import {selectTasks} from '../modules/tasks/queries.js';
 import {assessPlanning} from '../modules/planning/assess-planning.js';
 import {selectActivity} from '../modules/activity/queries.js';
 import {createTaskSource} from '../integrations/todoist/task-source.js';
 import {createActivitySource} from '../integrations/todoist/activity-source.js';
+import {createTimelineSource} from '../integrations/todoist/timeline-source.js';
 
 interface QueryFlags {date?: string; time?: string; json: boolean; 'time-blocked'?: boolean; since?: string}
 type TaskQuery = Parameters<typeof selectTasks>[1];
 
 export abstract class WorkflowCommand extends Command {
-  protected async executeQuery(kind: TaskQuery | 'planning' | 'activity', flags: QueryFlags): Promise<void> {
+  protected async executeQuery(kind: TaskQuery | 'planning' | 'activity' | 'timeline', flags: QueryFlags): Promise<void> {
     // Validate before making a request; capture the clock only once per command.
-    const reference = createReference(flags.date, flags.time);
+    const reference = kind === 'timeline' ? createDayReference(flags.date) : createReference(flags.date, flags.time);
     const since = flags.since === undefined ? undefined : parseClock(flags.since);
     if (since !== undefined) clockInstant(reference, since);
     const config = readConfig();
+    if (kind === 'timeline') {
+      const tasks = await this.readTodoist(() => createTimelineSource(config.token).listDayTasks(reference));
+      this.log(flags.json ? JSON.stringify({date: reference.date, tasks}, null, 2) : timelineTable(tasks));
+      return;
+    }
     if (kind === 'activity') {
       const events = await this.readTodoist(() => createActivitySource(config.token).listActivity(reference));
       const activity = selectActivity(events, reference, since);

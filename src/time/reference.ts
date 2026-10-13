@@ -68,7 +68,8 @@ export function clockInstant(reference: Reference, time: string): number {
   ).toMillis()
 }
 
-export function createReference(date?: string, time?: string, now?: Date): Reference {
+/** Whole-day queries resolve date boundaries without constructing an irrelevant clock. */
+export function createDayReference(date?: string, now?: Date): Reference {
   const current = now ?? new Date()
   const currentLocal = DateTime.fromJSDate(current)
   const zone = currentLocal.zoneName
@@ -77,24 +78,29 @@ export function createReference(date?: string, time?: string, now?: Date): Refer
   if (selectedDate === null) throw new Error('Unable to determine local date')
   const dateParts = parseDate(selectedDate)
 
-  const selectedTime = parseClock(time ?? currentLocal.toFormat('HH:mm:ss'))
   // Some zones begin a DST day at 01:00 rather than midnight.
   const dayStartValue = DateTime.fromObject(dateParts, {zone}).startOf('day')
   if (!dayStartValue.isValid || dayStartValue.toISODate() !== selectedDate) {
     throw new Error(`Nonexistent local date: ${selectedDate}`)
   }
   const dayEndValue = dayStartValue.plus({days: 1}).startOf('day')
-  const reference = {
+  return {
     date: selectedDate,
-    time: selectedTime,
-    instant: 0,
+    time: dayStartValue.toFormat('HH:mm:ss'),
+    instant: dayStartValue.toMillis(),
     dayStart: dayStartValue.toMillis(),
     dayEnd: dayEndValue.toMillis(),
     zone,
   }
+}
 
-  const instant = time === undefined && selectedDate === currentLocal.toISODate()
+export function createReference(date?: string, time?: string, now?: Date): Reference {
+  const current = now ?? new Date()
+  const currentLocal = DateTime.fromJSDate(current)
+  const reference = createDayReference(date, current)
+  const selectedTime = parseClock(time ?? currentLocal.toFormat('HH:mm:ss'))
+  const instant = time === undefined && reference.date === currentLocal.toISODate()
     ? currentLocal.startOf('second').toMillis()
     : clockInstant(reference, selectedTime)
-  return {...reference, instant}
+  return {...reference, time: selectedTime, instant}
 }

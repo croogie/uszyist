@@ -8,7 +8,7 @@ import type {Activity} from '../src/modules/activity/activity.js'
 import {assessPlanning} from '../src/modules/planning/assess-planning.js'
 import {selectTasks} from '../src/modules/tasks/queries.js'
 import type {Task} from '../src/modules/tasks/task.js'
-import {clockInstant, createReference, parseClock} from '../src/time/reference.js'
+import {clockInstant, createReference, createDayReference, parseClock} from '../src/time/reference.js'
 
 const reference = createReference('2026-10-13', '10:00', new Date('2026-10-13T14:00:00Z'))
 
@@ -153,4 +153,12 @@ test('a local day remains queryable when DST skips midnight', () => {
   } finally {
     process.env.TZ = originalZone
   }
+})
+
+test('whole-day references default to today and do not resolve an irrelevant clock on the selected day', () => {
+  const now = new Date('2026-10-13T06:30:00Z') // 02:30 in New York
+  assert.equal(createDayReference(undefined, now).date, '2026-10-13')
+  const day = createDayReference('2026-03-08', now) // 02:30 does not exist on this day
+  assert.equal(day.date, '2026-03-08')
+  assert.equal(day.dayEnd - day.dayStart, 23 * 60 * 60_000)
 })

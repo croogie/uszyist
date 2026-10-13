@@ -1,10 +1,12 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 import type { ActivityEvent, Task as SdkTask } from '@doist/todoist-sdk'
+import { TodoistApi } from '@doist/todoist-sdk'
 import { DateTime } from 'luxon'
 import { TodoistActivitySource } from '../src/integrations/todoist/activity-source.js'
 import { mapTodoistTask } from '../src/integrations/todoist/mapping.js'
 import { TodoistTaskSource } from '../src/integrations/todoist/task-source.js'
+import { TodoistTimelineSource } from '../src/integrations/todoist/timeline-source.js'
 import type { Reference } from '../src/time/reference.js'
 
 function sdkTask(overrides: Partial<SdkTask> = {}): SdkTask {
@@ -247,4 +249,68 @@ test('does not return partial activity when a later Todoist page fails', async (
   })
 
   await assert.rejects(source.listActivity(reference), /Todoist unavailable/)
+})
+
+test('timeline merges every active and completed page by planned start and retains recurring occurrences', async () => {
+  const reference = referenceIn(DateTime.local().zoneName ?? 'UTC')
+  const due = (date: string) => ({date, isRecurring: false, string: date})
+  const source = new TodoistTimelineSource({
+    async getTasks(args = {}) {
+      return args.cursor === undefined
+        ? {results: [sdkTask({id: 'open', due: due('2026-10-13T10:00:00')})], nextCursor: 'active-2'}
+        : {results: [
+          sdkTask({id: 'no-time', due: due('2026-10-13')}),
+          sdkTask({id: 'cycle', due: due('2026-10-13T14:00:00')}),
+          sdkTask({id: 'other-open', due: due('2026-10-12')}),
+        ], nextCursor: null}
+    },
+    async getCompletedTasksByDueDate(args) {
+      return args.cursor === undefined
+        ? {items: [sdkTask({id: 'early-done', checked: true, due: due('2026-10-13T09:00:00'), completedAt: new Date('2026-10-14T00:30:00Z')})], nextCursor: 'done-2'}
+        : {items: [
+          sdkTask({id: 'late-done', checked: true, due: due('2026-10-13T11:00:00'), completedAt: new Date('2026-10-13T13:00:00Z')}),
+          sdkTask({id: 'cycle', due: due('2026-10-13T12:00:00'), completedAt: new Date('2026-10-13T12:30:00Z')}),
+          sdkTask({id: 'cycle', due: due('2026-10-13T13:00:00'), completedAt: new Date('2026-10-13T13:30:00Z')}),
+          sdkTask({id: 'neighbor-done', checked: true, due: due('2026-10-14')}),
+        ], nextCursor: null}
+    },
+  })
+  const tasks = await source.listDayTasks(reference)
+  assert.deepEqual(tasks.map(task => [task.id, task.completed]), [
+    ['early-done', true], ['open', false], ['late-done', true],
+    ['cycle', true], ['cycle', true], ['cycle', false], ['no-time', false],
+  ])
+  assert.equal(Date.parse(tasks[0].completedAt ?? ''), Date.parse('2026-10-14T00:30:00Z'))
+  assert.equal(tasks[1].completedAt, null)
+  assert.equal(tasks.at(-1)?.start, null)
+})
+
+test('timeline fails atomically when a later completed-task page fails', async () => {
+  const source = new TodoistTimelineSource({
+    async getTasks() {
+      return {results: [sdkTask({due: {date: '2026-10-13', isRecurring: false, string: '13 Oct'}})], nextCursor: null}
+    },
+    async getCompletedTasksByDueDate(args) {
+      if (args.cursor === undefined) return {items: [sdkTask({checked: true})], nextCursor: 'done-2'}
+      throw new Error('Completed history unavailable')
+    },
+  })
+  await assert.rejects(source.listDayTasks(referenceIn('UTC')), /Completed history unavailable/)
+})
+
+test('timeline terminates when the completed endpoint omits its final cursor despite SDK types', async () => {
+  const api = new TodoistApi('fixture-token', {
+    async customFetch(url) {
+      const body = url.includes('/completed/')
+        ? {items: [sdkTask({id: 'done', checked: true, due: {date: '2026-10-13', isRecurring: false, string: '13 Oct'}})]}
+        : {results: [], nextCursor: null}
+      return {
+        ok: true, status: 200, statusText: 'OK', headers: {},
+        async text() {return JSON.stringify(body)},
+        async json() {return body},
+      }
+    },
+  })
+  const tasks = await new TodoistTimelineSource(api).listDayTasks(referenceIn('UTC'))
+  assert.deepEqual(tasks.map(task => [task.id, task.completed]), [['done', true]])
 })

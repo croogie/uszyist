@@ -32,16 +32,16 @@ function compareTasks(left: Task, right: Task): number {
 }
 
 
-function sorted(tasks: Task[]): Task[] {
+function sorted<T extends Task>(tasks: T[]): T[] {
   return tasks.sort(compareTasks)
 }
 
-export function selectTasks(
-  tasks: Task[],
+export function selectTasks<T extends Task>(
+  tasks: T[],
   kind: TaskSelection,
   reference: Reference,
   options: TaskSelectionOptions = {},
-): Task[] {
+): T[] {
   if (kind === 'deadlines') return sorted(tasks.filter((task) => task.deadline === reference.date))
 
   const dated = tasks.filter((task) => task.plannedDate === reference.date)
@@ -68,7 +68,7 @@ export function selectTasks(
 
   const future = dated
     .map((task) => ({task, start: timestamp(task.start)}))
-    .filter((entry): entry is {task: Task; start: number} => entry.start !== null && entry.start > reference.instant)
+    .filter((entry): entry is {task: T; start: number} => entry.start !== null && entry.start > reference.instant)
   const nearest = future.reduce<number | null>((result, entry) =>
     result === null || entry.start < result ? entry.start : result,
   null)

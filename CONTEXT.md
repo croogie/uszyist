@@ -1,6 +1,6 @@
 # Daily Task Workflow
 
-A daily workflow for planning tasks, executing them within time blocks, and reflecting on the day. Task queries describe the current Todoist state rather than reconstructing historical task state.
+A daily workflow for planning tasks, executing them within time blocks, and reflecting on the day. Queries use current task data and, for a daily timeline, recorded completed occurrences; they do not reconstruct historical task state.
 
 ## Language
 
@@ -41,3 +41,10 @@ _Avoid_: Planned date
 
 **Activity**:
 Recorded Todoist events within the selected day, optionally restricted by a lower time boundary. Activity alone does not establish focus or time spent working.
+
+**Completed occurrence**:
+A recorded completion of a task, associated with its assigned day rather than the day it was completed. Recurring occurrences can share a task ID.
+
+**Daily timeline**:
+Open tasks and completed occurrences assigned to a selected calendar day, ordered by planned start, with tasks without a start last. It is independent of the task-of-the-day label.
+_Avoid_: Tasks of the day

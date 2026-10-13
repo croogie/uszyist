@@ -4,7 +4,7 @@ A read-only CLI for the Uszy Todoist workflow: inspect daily tasks and time bloc
 
 ## Status
 
-Version **0.1.0** implements all eight commands using Oclif, TypeScript, and the official Todoist SDK. It does not modify tasks.
+Version **0.1.0** implements nine commands using Oclif, TypeScript, and the official Todoist SDK. It does not modify tasks.
 
 ## Install from source
 
@@ -26,6 +26,7 @@ Provide `TODOIST_API_TOKEN` through your shell's environment or secret manager. 
 ```sh
 uszyist tasks --help
 uszyist tasks day-tasks --time-blocked
+uszyist tasks timeline --date 2026-10-13
 uszyist tasks current --date 2026-10-13 --time 10:15 --json
 uszyist planning status
 uszyist activity list --since 07:00
@@ -36,6 +37,7 @@ uszyist activity list --since 07:00
 | Command | Purpose |
 | --- | --- |
 | `uszyist tasks list` | List incomplete tasks assigned to a selected day |
+| `uszyist tasks timeline` | List open and completed tasks assigned to a day, ordered by planned start; tasks without a start appear last |
 | `uszyist tasks day-tasks` | List tasks of the day using the configured label; optionally require a complete time block with `--time-blocked` |
 | `uszyist tasks current` | List all tasks whose time blocks contain the reference moment |
 | `uszyist tasks next` | List tasks sharing the nearest future start time |
@@ -47,6 +49,8 @@ uszyist activity list --since 07:00
 All commands support `--date YYYY-MM-DD`, `--json`, and `--help`. The date defaults to today in the system's local timezone.
 
 Time-based task queries accept `--time HH:mm[:ss]`, defaulting to the current local clock time, even for another selected date. Activity accepts `--since HH:mm[:ss]`; without it, the query covers the whole selected day. Output is a human-readable table by default, with a stable JSON contract for scripts.
+
+`tasks timeline` covers the whole selected day and does not accept `--time`. It includes all labels. Completed history is queried by assigned date, not completion date: a task completed on another day still belongs to its planned day. Recurring completions are retained as separate occurrences, even if they share an ID. The table distinguishes `open` and `done`.
 
 Invalid calendar dates and nonexistent daylight-saving clock times are rejected. Explicit ambiguous fall-back clock times resolve to the earlier instant; the default “now” preserves the actual current instant. Local days that begin after midnight remain queryable. SDK minute durations represent elapsed minutes; day durations use calendar days in the normalized local timezone.
 
@@ -81,6 +85,8 @@ An explicitly empty `USZYIST_DAY_TASK_LABEL` is rejected. Help works without cre
 
 Task-list JSON contains `date`, `tasks`, and, for time-based queries, normalized `referenceTime`. Tasks expose `id`, `title`, `labels`, `plannedDate`, `start`, `end`, `deadline`, and `url`; absent temporal values are `null`.
 
+Timeline JSON uses `date` and `tasks`, adding `completed` and `completedAt` to each task; it has no `referenceTime`. `completedAt` is a local-offset ISO timestamp when available, otherwise `null`.
+
 Planning JSON contains `date`, `dayTaskLabel`, `complete`, and `qualifyingTasks`. Activity JSON contains `date`, normalized `since` (or `null`), and `activity`; events expose `id`, `eventType`, `objectType`, `objectId`, `title`, and `occurredAt`. Missing titles are `null`; when Todoist omits an event ID, a deterministic identifier is derived from its object and timestamp.
 
 Empty results and `complete: false` return exit code 0. Parameter, configuration, and API failures return a nonzero exit code with an error on stderr, without partial results or request credentials. API timestamps are rendered with the system's local offset.
@@ -100,4 +106,4 @@ Tests cover query boundaries, overlaps, nearest-start ties, planning criteria, d
 - [Domain glossary](CONTEXT.md)
 - [Approved CLI design, module structure, development sequence, and acceptance criteria](docs/development-plan.md)
 
-Read-only SDK access and all eight CLI commands have been smoke-tested against a real Todoist account in both JSON and table modes. Root, group, and command help were also verified without credentials. No private task content is stored in this repository.
+Read-only SDK access and all nine CLI commands have been smoke-tested against a real Todoist account in both JSON and table modes. Root, group, and command help were also verified without credentials. Timeline verification included both open and completed tasks, chronological ordering, the default date, and rejection of `--time`. No private task content is stored in this repository.
