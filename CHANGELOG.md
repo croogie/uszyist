@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.1](https://github.com/croogie/uszyist/compare/v1.0.0...v1.0.1) (2026-10-13)
+
+
+### Bug Fixes
+
+* correct installation instructions after npm publication ([#14](https://github.com/croogie/uszyist/issues/14)) ([689d11a](https://github.com/croogie/uszyist/commit/689d11aaa50862875ba656eda618a414037a2fe4))
+
 ## 1.0.0 (2026-10-13)
 
 
