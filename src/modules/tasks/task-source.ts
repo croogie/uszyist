@@ -1,5 +1,5 @@
-import type {Task} from './task.js'
+import type { Task } from "./task.js";
 
 export interface TaskSource {
-  listTasks(): Promise<Task[]>
+  listTasks(): Promise<Task[]>;
 }

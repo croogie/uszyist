@@ -12,17 +12,17 @@ The domain glossary is in [CONTEXT.md](../CONTEXT.md).
 
 Executable: `uszyist`. Command separator: space. Commands, flags, help, messages, and JSON fields are English.
 
-| Command | Meaning | Additional flags |
-| --- | --- | --- |
-| `tasks list` | Incomplete tasks assigned to the selected day, including tasks without a start time | None |
-| `tasks timeline` | Open tasks and completed occurrences assigned to the selected day, ordered by planned start, with no-start tasks last; all labels | None |
-| `tasks day-tasks` | Incomplete tasks assigned to the selected day with the configured task-of-the-day label | `--time-blocked` |
-| `tasks current` | All incomplete tasks assigned to the selected day whose complete time blocks contain the reference moment | `--time` |
-| `tasks next` | All incomplete tasks assigned to the selected day sharing the nearest start strictly after the reference moment; duration is not required | `--time` |
-| `tasks elapsed` | Incomplete tasks assigned to the selected day whose complete time blocks have ended | `--time` |
-| `tasks deadlines` | Incomplete tasks with a deadline on the selected day, regardless of their assigned day | None |
-| `planning status` | Whether at least one incomplete task of the day has a complete time block on the selected day | None |
-| `activity list` | Recorded Todoist events within the selected day, without interpreting focus | `--since` |
+| Command           | Meaning                                                                                                                                   | Additional flags |
+| ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------- | ---------------- |
+| `tasks list`      | Incomplete tasks assigned to the selected day, including tasks without a start time                                                       | None             |
+| `tasks timeline`  | Open tasks and completed occurrences assigned to the selected day, ordered by planned start, with no-start tasks last; all labels         | None             |
+| `tasks day-tasks` | Incomplete tasks assigned to the selected day with the configured task-of-the-day label                                                   | `--time-blocked` |
+| `tasks current`   | All incomplete tasks assigned to the selected day whose complete time blocks contain the reference moment                                 | `--time`         |
+| `tasks next`      | All incomplete tasks assigned to the selected day sharing the nearest start strictly after the reference moment; duration is not required | `--time`         |
+| `tasks elapsed`   | Incomplete tasks assigned to the selected day whose complete time blocks have ended                                                       | `--time`         |
+| `tasks deadlines` | Incomplete tasks with a deadline on the selected day, regardless of their assigned day                                                    | None             |
+| `planning status` | Whether at least one incomplete task of the day has a complete time block on the selected day                                             | None             |
+| `activity list`   | Recorded Todoist events within the selected day, without interpreting focus                                                               | `--since`        |
 
 All commands accept `--date YYYY-MM-DD`, `--json`, and `--help`.
 
@@ -51,9 +51,9 @@ uszyist activity list --since 07:00
 
 ## Configuration
 
-| Variable | Contract |
-| --- | --- |
-| `TODOIST_API_TOKEN` | Required for API queries; never passed as a command-line flag or printed |
+| Variable                 | Contract                                                                                   |
+| ------------------------ | ------------------------------------------------------------------------------------------ |
+| `TODOIST_API_TOKEN`      | Required for API queries; never passed as a command-line flag or printed                   |
 | `USZYIST_DAY_TASK_LABEL` | Defaults to `zadanie-dnia` when absent; an explicitly empty value is a configuration error |
 
 The label is shared by task-of-the-day listing and planning assessment. No configuration file, authentication command, keychain integration, or OAuth flow is included.

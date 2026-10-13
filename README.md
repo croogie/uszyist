@@ -34,17 +34,17 @@ uszyist activity list --since 07:00
 
 ## Commands
 
-| Command | Purpose |
-| --- | --- |
-| `uszyist tasks list` | List incomplete tasks assigned to a selected day |
-| `uszyist tasks timeline` | List open and completed tasks assigned to a day, ordered by planned start; tasks without a start appear last |
+| Command                   | Purpose                                                                                                          |
+| ------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| `uszyist tasks list`      | List incomplete tasks assigned to a selected day                                                                 |
+| `uszyist tasks timeline`  | List open and completed tasks assigned to a day, ordered by planned start; tasks without a start appear last     |
 | `uszyist tasks day-tasks` | List tasks of the day using the configured label; optionally require a complete time block with `--time-blocked` |
-| `uszyist tasks current` | List all tasks whose time blocks contain the reference moment |
-| `uszyist tasks next` | List tasks sharing the nearest future start time |
-| `uszyist tasks elapsed` | List incomplete tasks whose time blocks have ended |
-| `uszyist tasks deadlines` | List tasks with a deadline on the selected day |
-| `uszyist planning status` | Check whether at least one task of the day has a complete time block |
-| `uszyist activity list` | List recorded Todoist events without inferring focus or productivity |
+| `uszyist tasks current`   | List all tasks whose time blocks contain the reference moment                                                    |
+| `uszyist tasks next`      | List tasks sharing the nearest future start time                                                                 |
+| `uszyist tasks elapsed`   | List incomplete tasks whose time blocks have ended                                                               |
+| `uszyist tasks deadlines` | List tasks with a deadline on the selected day                                                                   |
+| `uszyist planning status` | Check whether at least one task of the day has a complete time block                                             |
+| `uszyist activity list`   | List recorded Todoist events without inferring focus or productivity                                             |
 
 All commands support `--date YYYY-MM-DD`, `--json`, and `--help`. The date defaults to today in the system's local timezone.
 
@@ -74,10 +74,10 @@ Invalid calendar dates and nonexistent daylight-saving clock times are rejected.
 
 ## Configuration
 
-| Environment variable | Purpose |
-| --- | --- |
-| `TODOIST_API_TOKEN` | API access token, required for queries; never passed as a command-line argument or printed |
-| `USZYIST_DAY_TASK_LABEL` | Task-of-the-day label; defaults to `zadanie-dnia` when absent |
+| Environment variable     | Purpose                                                                                    |
+| ------------------------ | ------------------------------------------------------------------------------------------ |
+| `TODOIST_API_TOKEN`      | API access token, required for queries; never passed as a command-line argument or printed |
+| `USZYIST_DAY_TASK_LABEL` | Task-of-the-day label; defaults to `zadanie-dnia` when absent                              |
 
 An explicitly empty `USZYIST_DAY_TASK_LABEL` is rejected. Help works without credentials or network access. Never commit API tokens or private task data to this public repository.
 
