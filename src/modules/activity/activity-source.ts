@@ -1,6 +1,6 @@
-import type {Reference} from '../../time/reference.js'
-import type {Activity} from './activity.js'
+import type { Reference } from "../../time/reference.js";
+import type { Activity } from "./activity.js";
 
 export interface ActivitySource {
-  listActivity(reference: Reference): Promise<Activity[]>
+  listActivity(reference: Reference): Promise<Activity[]>;
 }
