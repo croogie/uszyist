@@ -17,11 +17,11 @@ A task with a complete time block; a start time without a duration is insufficie
 _Avoid_: Scheduled task
 
 **Task of the day**:
-A task designated by the `zadanie-dnia` label, whether or not it has a time block.
+A task designated by the workflow's task-of-the-day label, defaulting to `zadanie-dnia`, whether or not it has a time block.
 _Avoid_: Current task, priority task
 
 **Planning completion**:
-The presence of at least one task of the day with a complete time block on the selected day. Title grammar and schedule quality do not determine completion.
+The presence of at least one incomplete task of the day with a complete time block on the selected day. Title grammar and schedule quality do not determine completion; completing the last qualifying task can change the assessment.
 
 **Current tasks**:
 All incomplete tasks whose time blocks contain the reference moment. Overlapping blocks do not select a single preferred task.

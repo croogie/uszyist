@@ -1,0 +1,13 @@
+{
+  "name": "uszyist",
+  "version": "0.1.0",
+  "description": "Read-only Todoist daily workflow CLI",
+  "private": true,
+  "type": "module",
+  "bin": { "uszyist": "bin/run.js" },
+  "engines": { "node": ">=24", "npm": ">=11" },
+  "scripts": { "build": "tsc", "test": "tsx --test test/*.test.ts", "start": "node bin/run.js", "check": "tsc --noEmit" },
+  "oclif": { "bin": "uszyist", "dirname": "uszyist", "commands": "./dist/commands", "topicSeparator": " ", "topics": { "tasks": { "description": "Inspect incomplete tasks and time blocks" }, "planning": { "description": "Assess the current daily plan" }, "activity": { "description": "Inspect recorded Todoist events" } } },
+  "dependencies": { "@doist/todoist-sdk": "15.3.1", "@oclif/core": "4.10.1", "luxon": "3.7.2" },
+  "devDependencies": { "@types/luxon": "3.7.1", "@types/node": "24.10.1", "tsx": "4.21.0", "typescript": "5.9.3" }
+}

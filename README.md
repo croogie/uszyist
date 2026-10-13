@@ -1,12 +1,37 @@
 # uszyist
 
-A planned read-only CLI for the Uszy Todoist workflow: inspect daily tasks and time blocks, check planning criteria, and retrieve recorded activity.
+A read-only CLI for the Uszy Todoist workflow: inspect daily tasks and time blocks, check planning criteria, and retrieve recorded activity.
 
 ## Status
 
-**Design approved; implementation has not started.** This repository currently contains the domain glossary and development plan. There is no runnable CLI or installation package yet. The commands below describe the approved interface, not available functionality.
+Version **0.1.0** implements all eight commands using Oclif, TypeScript, and the official Todoist SDK. It does not modify tasks.
 
-## Planned interface
+## Install from source
+
+Requires **Node.js >=24** and **npm >=11**.
+
+```sh
+git clone https://github.com/croogie/uszyist.git
+cd uszyist
+npm ci
+npm run build
+npm link
+uszyist --help
+```
+
+Alternatively, run `node bin/run.js` instead of `uszyist` after building. No npm registry package has been published.
+
+Provide `TODOIST_API_TOKEN` through your shell's environment or secret manager. Do not put the token in command-line arguments, committed files, or shell history. Help requires no credentials.
+
+```sh
+uszyist tasks --help
+uszyist tasks day-tasks --time-blocked
+uszyist tasks current --date 2026-10-13 --time 10:15 --json
+uszyist planning status
+uszyist activity list --since 07:00
+```
+
+## Commands
 
 | Command | Purpose |
 | --- | --- |
@@ -19,9 +44,11 @@ A planned read-only CLI for the Uszy Todoist workflow: inspect daily tasks and t
 | `uszyist planning status` | Check whether at least one task of the day has a complete time block |
 | `uszyist activity list` | List recorded Todoist events without inferring focus or productivity |
 
-All commands will support `--date YYYY-MM-DD`, `--json`, and `--help`. The date defaults to today in the system's local timezone.
+All commands support `--date YYYY-MM-DD`, `--json`, and `--help`. The date defaults to today in the system's local timezone.
 
-Time-based task queries will accept `--time HH:mm[:ss]`, defaulting to the current local clock time. Activity will accept `--since HH:mm[:ss]`; without it, the query covers the whole selected day. Output will be a human-readable table by default, with a stable JSON contract for scripts.
+Time-based task queries accept `--time HH:mm[:ss]`, defaulting to the current local clock time, even for another selected date. Activity accepts `--since HH:mm[:ss]`; without it, the query covers the whole selected day. Output is a human-readable table by default, with a stable JSON contract for scripts.
+
+Invalid calendar dates and nonexistent daylight-saving clock times are rejected. Explicit ambiguous fall-back clock times resolve to the earlier instant; the default “now” preserves the actual current instant. Local days that begin after midnight remain queryable. SDK minute durations represent elapsed minutes; day durations use calendar days in the normalized local timezone.
 
 ## Workflow semantics
 
@@ -31,28 +58,46 @@ Time-based task queries will accept `--time HH:mm[:ss]`, defaulting to the curre
 - Deadlines are independent of assigned task dates and time blocks.
 - Planning assessment uses incomplete tasks only. Completing the last qualifying task can change the status to false: this describes the current plan, not a persisted record of morning planning.
 - Queries use current Todoist data; selecting a past date does not reconstruct historical task state.
-- The tool will not modify tasks.
+- The tool does not modify tasks.
 
-## Planned implementation
+## Architecture
 
 - **Oclif + TypeScript** for commands, parameters, and help.
 - **Official Todoist SDK** (`@doist/todoist-sdk`) behind an adapter; no `td` subprocesses.
-- **Node.js >=24**, with the SDK version pinned and verified during development.
+- **Node.js >=24**, with Todoist SDK **15.3.1** pinned in the lockfile.
 - Separate task, planning, and activity modules. Workflow rules remain independent of SDK types and command rendering.
 - Complete cursor pagination rather than silently returning only the first page.
 
-Planned configuration:
+## Configuration
 
 | Environment variable | Purpose |
 | --- | --- |
 | `TODOIST_API_TOKEN` | API access token, required for queries; never passed as a command-line argument or printed |
 | `USZYIST_DAY_TASK_LABEL` | Task-of-the-day label; defaults to `zadanie-dnia` when absent |
 
-Help will work without credentials or network access. Never commit API tokens or private task data to this public repository.
+An explicitly empty `USZYIST_DAY_TASK_LABEL` is rejected. Help works without credentials or network access. Never commit API tokens or private task data to this public repository.
+
+## Output and errors
+
+Task-list JSON contains `date`, `tasks`, and, for time-based queries, normalized `referenceTime`. Tasks expose `id`, `title`, `labels`, `plannedDate`, `start`, `end`, `deadline`, and `url`; absent temporal values are `null`.
+
+Planning JSON contains `date`, `dayTaskLabel`, `complete`, and `qualifyingTasks`. Activity JSON contains `date`, normalized `since` (or `null`), and `activity`; events expose `id`, `eventType`, `objectType`, `objectId`, `title`, and `occurredAt`. Missing titles are `null`; when Todoist omits an event ID, a deterministic identifier is derived from its object and timestamp.
+
+Empty results and `complete: false` return exit code 0. Parameter, configuration, and API failures return a nonzero exit code with an error on stderr, without partial results or request credentials. API timestamps are rendered with the system's local offset.
+
+## Development
+
+```sh
+npm run build
+npm run check
+npm test
+```
+
+Tests cover query boundaries, overlaps, nearest-start ties, planning criteria, deadline independence, DST, activity windows, SDK mapping, pagination failures, and terminal control characters. Tests use deterministic fixtures and do not require a token.
 
 ## Design documentation
 
 - [Domain glossary](CONTEXT.md)
 - [Approved CLI design, module structure, development sequence, and acceptance criteria](docs/development-plan.md)
 
-Development starts by verifying the published SDK's date, timezone, duration, deadline, activity, and pagination behavior against real read-only Todoist data. No authenticated runtime verification has been performed yet.
+Read-only SDK access and all eight CLI commands have been smoke-tested against a real Todoist account in both JSON and table modes. Root, group, and command help were also verified without credentials. No private task content is stored in this repository.

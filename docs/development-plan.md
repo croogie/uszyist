@@ -72,7 +72,7 @@ Planning JSON fields: `date`, `dayTaskLabel`, `complete`, and `qualifyingTasks`.
 
 Planning completion requires at least one task with the configured label and a complete block. It does not depend on title grammar, breaks, or overlap checks. Completed tasks do not participate: completing the last qualifying task can change the status to false. This evaluates the present plan, not a persisted fact that morning planning occurred.
 
-The activity result schema will be specified against the pinned SDK's event model during its implementation; it must remain independent of raw SDK objects and contain enough information to identify and describe each event.
+Activity JSON fields are `date`, normalized `since` (or `null`), and `activity`. Each event exposes `id`, `eventType`, `objectType`, `objectId`, `title`, and `occurredAt`; missing metadata is `null`. When the API omits an event ID, the adapter derives a deterministic identifier from object type, object ID, event type, and timestamp. SDK types remain confined to the adapter.
 
 ## Module structure
 
@@ -156,4 +156,8 @@ Official sources consulted:
 - [Activity client](https://github.com/Doist/todoist-sdk-typescript/blob/main/src/clients/activity-client.ts): activity reads, date boundaries, and cursor-based responses.
 - [Published npm metadata](https://registry.npmjs.org/@doist%2Ftodoist-sdk/latest): version 15.3.1 and Node >=24 / npm >=11 requirements observed during design. The README's lower Node requirement conflicts with published metadata; use package requirements.
 
-Research verified published metadata and repository source only. No SDK runtime or authenticated account requests were executed during design. Real-data verification is the first development step, not an already satisfied acceptance criterion.
+Version 0.1.0 implements all eight commands. Authenticated SDK reads and each CLI command have been exercised against real Todoist data in JSON and table modes; root, group, and command help were checked without credentials. Real API v1 data supplied timed values in `due.date` without `due.datetime`; the adapter supports both representations and retains date-only tasks without manufacturing midnight blocks. Deterministic tests cover temporal rules, mapping, pagination, failures, and terminal output. API calls performed during verification were read-only.
+
+Live activity verification also established that `dateTo` excludes events later on its named UTC date, despite the SDK's inclusive wording. The adapter requests through the next UTC date and applies the exact local half-open day window afterward. A regression test and a real-account check confirm that the latest event is retained.
+
+Explicit ambiguous fall-back clocks use the earlier instant, while an omitted time on today's date preserves the actual current instant. Nonexistent explicit clocks are rejected; dates whose first valid instant is after midnight remain queryable.
