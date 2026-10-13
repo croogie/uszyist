@@ -177,6 +177,6 @@ jobs:
       - name: Validate release identity and retained artifact
         run: node scripts/release-verify.mjs --artifact-dir release-artifact --tag "$RELEASE_TAG" --sha "$RELEASE_SHA" --origin-run-id "$ORIGIN_RUN_ID"
       - name: Publish only a missing verified version
-        run: node scripts/release-publish.mjs --artifact-dir release-artifact --tag "$RELEASE_TAG" --sha "$RELEASE_SHA" --origin-run-id "$ORIGIN_RUN_ID"
+        run: node scripts/release-publish.mjs --artifact-dir "$GITHUB_WORKSPACE/release-artifact" --tag "$RELEASE_TAG" --sha "$RELEASE_SHA" --origin-run-id "$ORIGIN_RUN_ID"
       - name: Smoke test exact registry version
         run: node scripts/package-smoke.mjs --registry "${RELEASE_TAG#v}"
