@@ -4,11 +4,41 @@ A read-only CLI for the Uszy Todoist workflow: inspect daily tasks and time bloc
 
 ## Status
 
-Version **0.1.0** implements nine commands using Oclif, TypeScript, and the official Todoist SDK. It does not modify tasks.
+The CLI implements nine commands using Oclif, TypeScript, and the official Todoist SDK. It does not modify tasks.
 
-## Install from source
+## Installation
 
-Requires **Node.js >=24** and **npm >=11**.
+The npm package is **not published yet**. After the authorized first publication, install the CLI globally or run it once without a global install:
+
+```sh
+npm install --global uszyist
+uszyist --help
+
+npx --yes uszyist --help
+```
+
+Requires Node.js >=24 and npm >=11. The Todoist SDK also declares both engine requirements, so npm >=11 is retained for consumers as well as development. Supported systems are Linux and macOS; Windows is outside the supported matrix.
+
+To upgrade a global installation after publication:
+
+```sh
+npm install --global uszyist@latest
+```
+
+Keep `TODOIST_API_TOKEN` in your shell environment or secret manager. Never place it in command-line arguments, committed files, shell history, issue reports, or pull requests. Help requires no credentials.
+
+```sh
+uszyist tasks --help
+uszyist tasks day-tasks --time-blocked
+uszyist tasks timeline --date 2026-10-13
+uszyist tasks current --date 2026-10-13 --time 10:15 --json
+uszyist planning status
+uszyist activity list --since 07:00
+```
+
+## Development from source
+
+Source installation is for development, not the consumer installation path. It requires Node.js >=24 and npm >=11.
 
 ```sh
 git clone https://github.com/croogie/uszyist.git
@@ -19,18 +49,7 @@ npm link
 uszyist --help
 ```
 
-Alternatively, run `node bin/run.js` instead of `uszyist` after building. No npm registry package has been published.
-
-Provide `TODOIST_API_TOKEN` through your shell's environment or secret manager. Do not put the token in command-line arguments, committed files, or shell history. Help requires no credentials.
-
-```sh
-uszyist tasks --help
-uszyist tasks day-tasks --time-blocked
-uszyist tasks timeline --date 2026-10-13
-uszyist tasks current --date 2026-10-13 --time 10:15 --json
-uszyist planning status
-uszyist activity list --since 07:00
-```
+Alternatively, run `node bin/run.js` after building.
 
 ## Commands
 
@@ -103,7 +122,8 @@ Tests cover query boundaries, overlaps, nearest-start ties, planning criteria, d
 
 ## Design documentation
 
-- [Domain glossary](CONTEXT.md)
-- [Approved CLI design, module structure, development sequence, and acceptance criteria](docs/development-plan.md)
+- [Domain glossary](https://github.com/croogie/uszyist/blob/main/CONTEXT.md)
+- [Approved CLI design, module structure, development sequence, and acceptance criteria](https://github.com/croogie/uszyist/blob/main/docs/development-plan.md)
+- [npm publication and open-source CLI standards implementation plan](https://github.com/croogie/uszyist/blob/main/docs/npm-release-plan.md)
 
 Read-only SDK access and all nine CLI commands have been smoke-tested against a real Todoist account in both JSON and table modes. Root, group, and command help were also verified without credentials. Timeline verification included both open and completed tasks, chronological ordering, the default date, and rejection of `--time`. No private task content is stored in this repository.

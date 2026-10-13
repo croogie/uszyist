@@ -2,7 +2,29 @@
   "name": "uszyist",
   "version": "0.1.0",
   "description": "Read-only Todoist daily workflow CLI",
-  "private": true,
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/croogie/uszyist.git"
+  },
+  "homepage": "https://github.com/croogie/uszyist#readme",
+  "bugs": {
+    "url": "https://github.com/croogie/uszyist/issues"
+  },
+  "keywords": [
+    "todoist",
+    "cli",
+    "tasks",
+    "planning"
+  ],
+  "files": [
+    "bin",
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
   "type": "module",
   "bin": {
     "uszyist": "bin/run.js"
@@ -12,7 +34,10 @@
     "npm": ">=11"
   },
   "scripts": {
-    "build": "tsc",
+    "clean": "node scripts/clean.mjs",
+    "build": "npm run clean && tsc",
+    "prepack": "npm run build",
+    "smoke:package": "node scripts/package-smoke.mjs",
     "test": "tsx --test test/*.test.ts",
     "start": "node bin/run.js",
     "check": "tsc --noEmit",

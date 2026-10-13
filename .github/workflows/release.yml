@@ -1,0 +1,182 @@
+name: Release
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: Exact stable release tag, for example v1.2.3
+        required: true
+        type: string
+      release_sha:
+        description: Exact 40-character commit SHA tagged by the release
+        required: true
+        type: string
+      artifact_run_id:
+        description: Originating Release workflow run ID that retained the tarball
+        required: true
+        type: string
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  release-please:
+    name: create release PR or release
+    if: github.event_name == 'push' && github.actor == github.repository_owner
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    outputs:
+      release_created: ${{ steps.release.outputs.release_created }}
+      release_tag: ${{ steps.release.outputs.tag_name }}
+      release_sha: ${{ steps.release.outputs.sha }}
+    steps:
+      - name: Mint dedicated release application token
+        id: app-token
+        uses: actions/create-github-app-token@21cfef2b496dd8ef5b904c159339626a10ad380e # v1.11.6
+        with:
+          app-id: ${{ vars.RELEASE_APP_ID }}
+          private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+          owner: croogie
+          repositories: |
+            uszyist
+      - name: Create or update release PR
+        id: release
+        uses: googleapis/release-please-action@16a9c90856f42705d54a6fda1823352bdc62cf38 # v4.4.0
+        with:
+          token: ${{ steps.app-token.outputs.token }}
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
+
+  prepare:
+    name: verify and retain release tarball
+    needs: release-please
+    if: needs.release-please.outputs.release_created == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    outputs:
+      release_tag: ${{ needs.release-please.outputs.release_tag }}
+      release_sha: ${{ needs.release-please.outputs.release_sha }}
+      origin_run_id: ${{ github.run_id }}
+    steps:
+      - name: Check out exact release commit
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: ${{ needs.release-please.outputs.release_sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Set up Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 24.0.0
+          cache: npm
+      - name: Install clean dependencies
+        run: npm ci
+      - name: Type check
+        run: npm run check
+      - name: Run tests
+        run: npm test
+      - name: Pack and fingerprint exact release artifact
+        env:
+          RELEASE_TAG: ${{ needs.release-please.outputs.release_tag }}
+          RELEASE_SHA: ${{ needs.release-please.outputs.release_sha }}
+          ORIGIN_RUN_ID: ${{ github.run_id }}
+        run: node scripts/release-prepare.mjs --out-dir release-artifact --tag "$RELEASE_TAG" --sha "$RELEASE_SHA" --run-id "$ORIGIN_RUN_ID"
+      - name: Smoke test retained tarball
+        run: node scripts/package-smoke.mjs --tarball release-artifact/package.tgz
+      - name: Retain verified release artifact
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: uszyist-release-${{ needs.release-please.outputs.release_tag }}
+          path: release-artifact
+          if-no-files-found: error
+          retention-days: 90
+
+  recover:
+    name: validate retained release artifact
+    if: github.event_name == 'workflow_dispatch' && github.actor == github.repository_owner
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    outputs:
+      release_tag: ${{ inputs.release_tag }}
+      release_sha: ${{ inputs.release_sha }}
+      origin_run_id: ${{ inputs.artifact_run_id }}
+    steps:
+      - name: Check out exact release commit
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: ${{ inputs.release_sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Set up Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 24.0.0
+      - name: Download original retained artifact
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: uszyist-release-${{ inputs.release_tag }}
+          path: release-artifact
+          repository: ${{ github.repository }}
+          run-id: ${{ inputs.artifact_run_id }}
+          github-token: ${{ github.token }}
+      - name: Validate release identity and retained artifact
+        env:
+          RELEASE_TAG: ${{ inputs.release_tag }}
+          RELEASE_SHA: ${{ inputs.release_sha }}
+          ORIGIN_RUN_ID: ${{ inputs.artifact_run_id }}
+        run: node scripts/release-verify.mjs --artifact-dir release-artifact --tag "$RELEASE_TAG" --sha "$RELEASE_SHA" --origin-run-id "$ORIGIN_RUN_ID"
+
+  publish:
+    name: publish verified release
+    needs: [prepare, recover]
+    if: always() && vars.NPM_AUTOMATED_PUBLISH_ENABLED == 'true' && (needs.prepare.result == 'success' || needs.recover.result == 'success')
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    concurrency:
+      group: npm-uszyist-publication
+      cancel-in-progress: false
+    permissions:
+      actions: read
+      contents: read
+      id-token: write
+    env:
+      RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.release_tag || needs.prepare.outputs.release_tag }}
+      RELEASE_SHA: ${{ github.event_name == 'workflow_dispatch' && inputs.release_sha || needs.prepare.outputs.release_sha }}
+      ORIGIN_RUN_ID: ${{ github.event_name == 'workflow_dispatch' && inputs.artifact_run_id || needs.prepare.outputs.origin_run_id }}
+    steps:
+      - name: Check out exact release commit
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.release_sha || needs.prepare.outputs.release_sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Set up Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 24.0.0
+      - name: Install npm with Trusted Publishing support
+        run: npm install --global npm@11.5.1
+      - name: Download retained artifact from this release run
+        if: github.event_name == 'push'
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: uszyist-release-${{ needs.prepare.outputs.release_tag }}
+          path: release-artifact
+      - name: Download retained artifact for recovery
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: uszyist-release-${{ inputs.release_tag }}
+          path: release-artifact
+          repository: ${{ github.repository }}
+          run-id: ${{ inputs.artifact_run_id }}
+          github-token: ${{ github.token }}
+      - name: Validate release identity and retained artifact
+        run: node scripts/release-verify.mjs --artifact-dir release-artifact --tag "$RELEASE_TAG" --sha "$RELEASE_SHA" --origin-run-id "$ORIGIN_RUN_ID"
+      - name: Publish only a missing verified version
+        run: node scripts/release-publish.mjs --artifact-dir release-artifact --tag "$RELEASE_TAG" --sha "$RELEASE_SHA" --origin-run-id "$ORIGIN_RUN_ID"
+      - name: Smoke test exact registry version
+        run: node scripts/package-smoke.mjs --registry "${RELEASE_TAG#v}"
