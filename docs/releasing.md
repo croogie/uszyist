@@ -323,6 +323,10 @@ Publication is serialized without cancelling a running publish. Release preparat
 
 The workflow passes an absolute artifact directory to the publisher. Keep this path absolute: npm interprets a bare `release-artifact/package.tgz` argument as a GitHub repository shorthand rather than a local tarball.
 
+After a successful upload, the publisher waits up to five minutes for the exact version and npm's consumer package metadata to both report the retained tarball's integrity. Checks are ten seconds apart; each HTTP request, including its response body, is limited to fifteen seconds or the remaining shared deadline. HTTP 404 and a version absent from valid consumer metadata are treated as propagation delay. A different or missing integrity, malformed metadata, network error, or other HTTP error stops immediately. An existing matching version uses the same visibility check without uploading again, before exact-version consumer smoke.
+
+A visibility timeout is not proof that publication failed: npm may already have accepted the upload. Inspect the exact registry version before recovery; never retry the upload blindly, rebuild the artifact, or bump the version solely for this timeout. Recovery can verify matching bytes, skip uploading, and repeat consumer smoke once registry metadata is visible. Releases whose original SHA predates this waiting logic still use their original scripts during recovery.
+
 For recovery, use the exact tag, 40-character SHA, and original artifact run ID. The commands below intentionally dispatch publication recovery; run them only for an authorized release and after setting the three observed values:
 
 ```sh
