@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.3](https://github.com/croogie/uszyist/compare/v1.0.2...v1.0.3) (2026-10-14)
+
+
+### Bug Fixes
+
+* wait for npm registry propagation after publication ([#18](https://github.com/croogie/uszyist/issues/18)) ([a35c9df](https://github.com/croogie/uszyist/commit/a35c9df725882d98b75d35412cea3e1560dff94b))
+
 ## [1.0.2](https://github.com/croogie/uszyist/compare/v1.0.1...v1.0.2) (2026-10-14)
 
 

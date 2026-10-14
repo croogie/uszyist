@@ -1,6 +1,6 @@
 {
   "name": "uszyist",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Read-only Todoist daily workflow CLI",
   "license": "MIT",
   "repository": {
