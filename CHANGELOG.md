@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.2](https://github.com/croogie/uszyist/compare/v1.0.1...v1.0.2) (2026-10-14)
+
+
+### Bug Fixes
+
+* publish retained tarball using an absolute path ([#16](https://github.com/croogie/uszyist/issues/16)) ([73f634c](https://github.com/croogie/uszyist/commit/73f634c4358e43d8afb78eb9a9f108aafc3aabf1))
+
 ## [1.0.1](https://github.com/croogie/uszyist/compare/v1.0.0...v1.0.1) (2026-10-13)
 
 
