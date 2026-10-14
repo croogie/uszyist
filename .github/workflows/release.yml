@@ -44,7 +44,7 @@ jobs:
             uszyist
       - name: Create or update release PR
         id: release
-        uses: googleapis/release-please-action@16a9c90856f42705d54a6fda1823352bdc62cf38 # v4.4.0
+        uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0
         with:
           token: ${{ steps.app-token.outputs.token }}
           config-file: release-please-config.json
@@ -62,7 +62,7 @@ jobs:
       origin_run_id: ${{ github.run_id }}
     steps:
       - name: Check out exact release commit
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ needs.release-please.outputs.release_sha }}
           fetch-depth: 0
@@ -87,7 +87,7 @@ jobs:
       - name: Smoke test retained tarball
         run: node scripts/package-smoke.mjs --tarball release-artifact/package.tgz
       - name: Retain verified release artifact
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: uszyist-release-${{ needs.release-please.outputs.release_tag }}
           path: release-artifact
@@ -105,7 +105,7 @@ jobs:
       origin_run_id: ${{ inputs.artifact_run_id }}
     steps:
       - name: Check out exact release commit
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ inputs.release_sha }}
           fetch-depth: 0
@@ -148,7 +148,7 @@ jobs:
       ORIGIN_RUN_ID: ${{ github.event_name == 'workflow_dispatch' && inputs.artifact_run_id || needs.prepare.outputs.origin_run_id }}
     steps:
       - name: Check out exact release commit
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ github.event_name == 'workflow_dispatch' && inputs.release_sha || needs.prepare.outputs.release_sha }}
           fetch-depth: 0
