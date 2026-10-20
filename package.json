@@ -62,7 +62,7 @@
   },
   "dependencies": {
     "@doist/todoist-sdk": "15.3.1",
-    "@oclif/core": "4.10.1",
+    "@oclif/core": "5.1.8",
     "luxon": "3.7.2"
   },
   "devDependencies": {
